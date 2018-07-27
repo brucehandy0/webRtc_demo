@@ -10,7 +10,7 @@ var User = db.model('User', {
   password: String,
   auth_token: String,
   auth_date: Number,
-  un_reads: Array,
+  un_reads: Array, //这个未发送信息
   friends: Array
 
 })
@@ -103,9 +103,9 @@ var register = function (req, res) {
 }
 //查询所有用户，和在线用户
 var findAllUser = function (req, res) {
-  if (typeof (req) == 'string') {
+  // if (typeof (req) == 'string') {
 
-  }
+  // }
   //查询在线人数应该在session中查找
   //查询数据
   User.find({}, ['name', 'headImageUrl', 'nickname'], function (err, result) {
@@ -126,11 +126,12 @@ var findAllUser = function (req, res) {
 
 }
 //查询某人是否存在
+//内部请求 ，参数是一个name ：string
+//http请求，参数是req
 var findAnyOne = function (req, res) {
   //判断req 是一个请求,还是内部调用
   //string 是内部,object是http请求
   if (typeof (req) == 'string') {
-
     return new Promise(function (resolve, reject) {
       User.findOne({
         "name": req
@@ -143,13 +144,34 @@ var findAnyOne = function (req, res) {
         // console.log(result);
       })
     });
-
+    //http请求
   } else {
 
   }
-
-
 }
+
+//查询一个人的未读信息
+//内部请求 ，参数是一个name ：string
+//http请求，参数是req
+// var findAnyUnreads = function(){
+//   if (typeof (req) == 'string') {
+//     return new Promise(function (resolve, reject) {
+//       User.findOne({
+//         "name": req
+//       }, function (err, result) {
+//         if (err) {
+//           reject(err);
+//         } else {
+//           resolve(result);
+//         }
+//         // console.log(result);
+//       })
+//     });
+//     //http请求
+//   } else {
+
+//   }
+// }
 
 var mobileLogin = function (req, res) {
 

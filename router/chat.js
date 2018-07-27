@@ -23,19 +23,53 @@ var chat = function (io) {
 
   // })
 
-  io.on("connection", function (socket) {
+  io.on("connection",async function (socket) {
     // console.log("---来了");
     var token = socket.handshake.query.auth_token;
     var userName = vfglobal.token_Map[token];
+    
+    // console.log(typeof(userName));
+    // if(typeof(userName) == "undefined"){
+    //   io.disconnect();
+    //   console.log(io);
+    //   return false
+    // }else{
+    //   console.log(userName + "连接了socket服务器");
+    // }
+  
     console.log(userName + "连接了socket服务器");
-
     //socketID 每次连接都会变
     vfglobal.socket_Map[userName] = socket;
     vfglobal.socket_MapID[userName] = socket.id;
 
+    //当一个人上线后，查询他的未读信息
+    try {
+      var someBody = await vfUser.findAnyOne(userName);
+    } catch (e) {
+      console.log('error'+e);
+    }   
+    var un_reads = someBody.un_reads;
 
-    // console.log(socket.id);
-    // console.log(vfglobal);
+    console.log(someBody);
+    console.log('---------');
+    console.log(un_reads);
+// un_reads[0]
+//     if(){
+
+//     }
+
+    // var len = un_reads
+    // for(){
+
+    // }
+    // try{
+    //   var someMes = await vfMessage.findMsgByMsgId(un_reads[0]);
+    // }catch(e){
+    //   console.log(e);
+    // }
+    // console.log(someMes);
+
+    //
 
     // socket.broadcast.emit("onLine", { "userName": userName });
     io.sockets.emit("onLine", {
@@ -77,8 +111,6 @@ var chat = function (io) {
         if (callback) { //ack 回调 服务器已收到消息
           callback(msg);
         }
-        // console.log(message);
-
         var to_user = msg.to_user;
 
         var voIo = vfglobal.socket_Map[message.to_user];
@@ -105,16 +137,10 @@ var chat = function (io) {
     }
 
 
-
-
     //添加好友
     socket.on("addFriend", async function (message, callback) {
-      // console.log(message);
-      // console.log(1);
-      // console.log(callback);
       //所有消息数据存到数据库
       vfMessage.friendMessageSave(message, function (msg) {});
-
 
       //测试emitter 相关
       // vfUser.findAllUser();
@@ -130,7 +156,6 @@ var chat = function (io) {
       // console.log('---------------------');
       // console.log(socket);
       //判断是否有此用户，如果有，继续逻辑，没有返回查无此人
-
 
       try {
         var someBody = await vfUser.findAnyOne(message.to_user);

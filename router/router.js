@@ -46,7 +46,7 @@ var router = function (app) {
     res.set('Content-Type', 'text/html');
     // res.setEncoding('utf8');
     // res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
-    console.log(req.session);
+    // console.log(req.session);
     //这个页面必须保证有用户名了，
     if (!req.session.user) {
         res.redirect("/");
