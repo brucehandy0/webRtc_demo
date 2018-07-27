@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <style type="text/css">
+    .caozuo {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      height: 100px;
+      background-color: #ccc;
+      width: 100%;
+    }
+
+    .caozuo input {
+      font-size: 30px;
+    }
+
+    .caozuo input[type=text] {
+      width: 100%;
+    }
+
+    #remoteVideo {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+
+  <video id="remoteVideo" autoplay="1"></video>
+  <div>
+    <span>用户</span>
+    <span id="user">需要</span>
+    <span>登录</span>
+  </div>
+  <!-- <input type="text" name="userName">
+  <input type="text" name="password">
+  <button id="login">登录</button> -->
+
+  <!-- <br> -->
+  <input type="text" name="friendName">
+  <button id="addF">添加好友</button>
+
+  <!-- <div>
+    <ul class="liebiao">
+    </ul>
+  </div> -->
+
+  <div>
+    <div>你的好友列表</div>
+    <div id="firends"></div>
+  </div>
+
+  </br>
+  </br>
+  </br>
+  </br>
+  </br>
+  <button id="videoChat">视频聊天</button>
+  <div class="caozuo">
+    <div>按enter发送</div>
+    <input type="text" id="content" />
+  </div>
+
+  <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+  <script type="text/javascript" src="/jquery-1.11.3.min.js"></script>
+  <script type="text/javascript">
+    var generateUUID = function () {
+      var d = new Date().getTime();
+      var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = (d + Math.random() * 16) % 16 | 0;
+        d = Math.floor(d / 16);
+        return (c == 'x' ? r : (r & 0x7 | 0x8)).toString(16);
+      });
+      return uuid;
+    };
+  </script>
+
+
+  <script type="text/javascript">
+    // var name1 = '<%- user%>';
+    // unescape() 对 escape() 
+    // decodeURI() 和 decodeURIComponent() 
+
+
+
+    var user = JSON.parse('<%- user%>');
+    // var user;
+    console.log(user);
+    var socket;
+    var allUser = [];
+    var chooseFri = 0;
+    var isLogin = 0;
+    // var otherSocketId;//不得已的全局变量，存储其他新人进入房间的socketId
+    // var isCaller = window.location.href.split('#')[1];
+
+    //创建chatvideo相关
+    var pc;
+    // var iceServer = {
+    //     "iceServers": [{
+    //         "url": "stun:stun.l.google.com:19302"
+    //     }, {
+    //         "url": "turn:numb.viagenie.ca",
+    //         "username": "webrtc@live.com",
+    //         "credential": "muazkh"
+    //     }]
+    // };
+    var iceServer = {
+      "iceServers": [{
+        "url": "stun:stun.l.google.com:19302"
+      }, ]
+    };
+
+    var iceServer2 = {
+      "iceServers": [{
+        "url": "stun:23.21.150.121"
+      }, ]
+    }
+
+
+    window.RTCPeerConnection = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+    window.RTCSessionDescription = window.mozRTCSessionDescription || window.RTCSessionDescription;
+    window.RTCIceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
+
+    navigator.getUserMedia = navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
+    window.URL = window.webkitURL || window.URL;
+
+    // pc = new RTCPeerConnection(window.iceServers);
+    // console.log(window.iceServer);
+    pc = new RTCPeerConnection(iceServer);
+    //视频设置
+    // var video_constraints = {
+    //     mandatory: {},
+    //     optional: []
+    // }
+    // //媒体设置
+    // var mediaConstraints = {
+    //     optional: [],
+    //     mandatory: {
+    //         OfferToReceiveAudio: false,
+    //         OfferToReceiveVideo: true
+    //     }
+    // };
+
+
+    // $('#login').on('click', function () {
+    //   //登陆
+    //   var url = './mobileLogin';
+    //   var paras = {};
+    //   paras.userName = 'lilili';
+    //   paras.password = '123456';
+    //   if ($("input[name=userName]").val()) {
+    //     paras.userName = $("input[name=userName]").val();
+    //     paras.password = $("input[name=password]").val();
+    //   }
+
+    //   $.post(url, paras, function (res) {
+
+    //     user = res.data;
+    //     console.log(res);
+    //     initSocket();
+    //     initVideo();
+    //     $('#user').html(user.name);
+    //   });
+    // })
+
+    if (user) {
+      initSocket();
+      // initVideo();
+      $('#user').html(user.name);
+    } else {
+      alert('游客未登录');
+    }
+
+
+    function chooseMe(index, value) {
+      chooseFri = allUser[index].value;
+      // document.get
+      console.log(chooseFri);
+      document.getElementById("A" + index).style.background = "red";
+      //  document.getElementById("A" + index).
+    }
+
+    function initSocket() {
+      socket = io.connect('http://localhost:3000', {
+        query: {
+          auth_token: user.auth_token
+        }
+      });
+      // socket = io.connect('http://192.168.1.181:3000', {
+      //   query: {
+      //     auth_token: user.auth_token
+      //   }
+      // });
+
+      // 不太舒服
+      socket.on("onLine", function (msg) {
+        if (msg.userName == user.name) {
+          isLogin = 1;
+          console.log('确实你上线了');
+        }
+      });
+
+      //获取好友列表
+      var url = './findFriends';
+      var paras = {};
+      paras.userName = user.name;
+      $.post(url, paras, function (res) {
+        console.log(res);
+        var str = '';
+        for (var i = 0; i < res.data.length; i++) {
+          allUser.push({
+            index: i,
+            value: res.data[i]
+          });
+          str = str + "<button id='A" + i + "'  onclick='chooseMe(" + i + ", \" " + res.data[i].toString() +
+            " \" )'>" + res.data[i] + '</button></br>';
+        }
+        //    console.log(str);
+        // console.log(str);
+
+        // console.log(allUser);
+        $('#firends').html(str);
+
+      });
+
+
+
+
+      //发送添加好友请求
+      $('#addF').on('click', function () {
+        var message = {};
+        message.msg_id = generateUUID();
+
+        message.sendtime = new Date().getTime();
+        message.from_user = user.name;
+        message.to_user = $("input[name=friendName]").val();
+        message.chat_type = "reqFri";
+        message.ext = "";
+        message.bodies = "";
+        message.type = "ack";
+        message.group_id = "";
+        message.group_name = "";
+
+        socket.emit("addFriend", message);
+      });
+
+      //响应addFriend
+      socket.on("addFriend", function (msg) {
+        console.log(msg);
+        if (msg.to_user == user.name) {
+          if (msg.type == "ack") {
+            var r = confirm(msg.from_user + "要添加您为好友，是否同意");
+            //给对方发一个消息
+            var message = {};
+            message.msg_id = generateUUID();
+            message.sendtime = new Date().getTime();
+            message.from_user = user.name;
+            message.to_user = msg.from_user;
+            message.chat_type = "reqFri";
+            message.ext = "";
+            message.bodies = "";
+            message.group_id = "";
+            message.group_name = "";
+
+            if (r == true) {
+              message.type = "syn";
+              socket.emit("addFriend", message);
+            } else {
+              message.type = "no";
+              socket.emit("addFriend", message);
+            }
+
+          } else if (msg.type == "no") {
+            alert(msg.from_user + "拒绝添加您为好友");
+          } else if (msg.type == "syn") {
+            alert(msg.from_user + "已经添加您为好友");
+            //刷新页面
+            history.go(0)
+          } 
+        }
+
+        //自己给自己的消息
+        if(msg.from_user == user.name){
+          if (msg.type == "no_body") {
+            alert('查无此人');
+          }else if(msg.type == "un_line"){
+            alert('对方未上线,等待对方上线同意后,即可成为好友');
+          }
+        }
+
+      });
+
+
+      $("#content").keydown(function (e) {
+        if (e.keyCode == 13) {
+
+          //给所有人发信息//暂时不用
+          // socket.emit("liaotian", {
+          //     "content": $("#content").val(),
+          //     "from": user.name
+          // },function(res) {
+          //     console.log('发送成功');
+          // });
+
+          //暂时获取name代替id，name唯一
+          //获取好友id
+          // if (!isLogin) {
+          //   alert('请登陆先，ok');
+          //   // return;
+          // }
+          if (!chooseFri) {
+            alert('请选择一个朋友先');
+            return;
+          }
+          console.log(chooseFri);
+
+          var message = {};
+          message.id = generateUUID();
+          message.timestamp = "";
+
+          message.sendtime = new Date().getTime();
+          message.from_user = user.name;
+          //必须发给好友
+          message.to_user = chooseFri;
+          message.chat_type = "chat";
+          message.ext = "";
+          message.bodies = {};
+          message.bodies.type = "txt"
+          message.bodies.msg = $("#content").val();
+          //单聊
+          socket.emit("chat", message,fn);
+
+          var fn = function(){
+            console.log('fffff');
+          }
+
+          $(this).val("");
+        }
+      });
+      socket.on("chat", function (msg) {
+        console.log('你收到了消息');
+        console.log(msg);
+      });
+      // socket.on("liaotian", function (msg) {
+      //     console.log(msg);
+      // });
+
+    }
+
+
+    function initVideo() {
+      // console.log(socket);
+      function error(err) {
+        alert(err);
+      }
+
+      var videoDom = document.getElementById("videoChat");
+      $('#videoChat').on("click", function () {
+
+        if (!chooseFri) {
+          alert('请选择一个朋友先');
+          return;
+        }
+
+        //发起一个视频聊天
+        var obj = {
+          "from_user": user.name,
+          "to_user": chooseFri
+        }
+        socket.emit("videoChat", obj, function (msg) {
+          joinRoom(msg);
+        })
+      });
+
+
+
+      //房间号
+      function joinRoom(roomNum) {
+        var object = {};
+        if (roomNum) {
+          object.room = roomNum;
+        } else {
+          object.room = '';
+        }
+        console.log(object);
+        socket.emit("__join", object);
+      }
+
+
+      // console.log(socket);
+
+      // 其他新人加入房间的信息
+      socket.on("_new_peer", function (msg) {
+        console.log('其他新人加入房间的信息');
+        //  console.log(msg.socketId);
+        socketId = msg.socketId;
+        otherSocketId = msg.socketId;
+        if (socketId == "" || socketId == null) {
+          //return;
+        } else {
+          //创立连接
+          //获取视频流
+          // getUserMedia(function (video_stream) {
+          //     //创立连接
+          //     offererPeer(video_stream)
+          // });
+
+          var n = navigator
+          n.getMedia = n.webkitGetUserMedia || n.mozGetUserMedia
+          n.getMedia({
+            audio: true,
+            video: true
+          }, function (video_stream) {
+            pc.addStream(video_stream);
+
+            pc.onicecandidate = function (event) {
+              console.log("offer 发送ice");
+              console.log(event.candidate);
+              if (event.candidate !== null) {
+                var iceobj = {
+                  "id": event.candidate.sdpMid,
+                  "label": event.candidate.sdpMLineIndex,
+                  "candidate": event.candidate.candidate,
+                  "socketId": socketId,
+                  "ownSocketId": socket.id
+                  //  "remoteDesc": answer
+                };
+                socket.emit("__ice_candidate", iceobj);
+              }
+            };
+
+            pc.createOffer(function (offer) {
+              console.info(offer);
+              pc.setLocalDescription(new RTCSessionDescription(offer))
+              //type offer,answer
+              var obj = {
+                "socketId": socketId,
+                "sdp": {
+                  "type": "offer",
+                  "sdp": offer
+                }
+              };
+              socket.emit("__" + obj.sdp.type, obj);
+              console.log('发起了offer');
+
+            }, function () {})
+
+
+          }, onerror)
+
+          function onerror(e) {
+            alert(JSON.stringify(e, null, '\t'))
+          }
+        }
+      });
+
+      //
+      //  socket.on("_peers",function(msg){
+      //     var myId = msg.you;
+      //     if(!myId){
+      //         alert();
+      //     }
+      //  });
+
+
+      // 新加入的人发送offer
+      socket.on("_offer", function (msg) {
+        console.log("收到了offer");
+        console.log("offer收到id" + msg.socketId);
+        var sdpDic = msg.sdp;
+        var sdp = sdpDic.sdp;
+        var type = sdpDic.type;
+        var socketId = msg.socketId;
+        if (sdp == null || type == null || socketId == null) {
+          alert('错误');
+        } else {
+          // alert('收到了连接请求');
+          //连接并回答
+          //获取视频流
+          var n = navigator
+          n.getMedia = n.webkitGetUserMedia || n.mozGetUserMedia
+          n.getMedia({
+            "audio": true,
+            "video": true
+          }, function (stream) {
+            pc.addStream(stream);
+            createAns();
+
+          }, function (error) {
+            //处理媒体流创建失败错误
+            console.log('getUserMedia error: ' + error);
+          });
+
+          var createAns = function () {
+            pc.onicecandidate = function (event) {
+              console.log('ans 发送ice');
+              if (event.candidate !== null) {
+                var iceobj = {
+                  "id": event.candidate.sdpMid,
+                  "label": event.candidate.sdpMLineIndex,
+                  "candidate": event.candidate.candidate,
+                  "socketId": socketId,
+                  "ownSocketId": socket.id
+                };
+                socket.emit("__ice_candidate", iceobj);
+              }
+            };
+
+            pc.setRemoteDescription(new RTCSessionDescription(sdp), function () {
+              pc.createAnswer(function (answer) {
+                pc.setLocalDescription(new RTCSessionDescription(answer), function () {
+                  var obj = {
+                    "socketId": socketId,
+                    "sdp": {
+                      "type": "answer",
+                      "sdp": answer
+                    }
+                  };
+                  // console.log(sdp);
+                  // console.log(answer);
+                  socket.emit("__" + obj.sdp.type, obj);
+
+                }, error);
+              }, error)
+            }, error);
+
+          }
+
+
+        }
+      });
+
+      //回应offer
+      socket.on("_answer", function (msg) {
+        console.log("前端收到了answer");
+        // console.log("收到的answer的id"+ msg.socketId);
+        var sdpDic = msg.sdp;
+        var sdp = sdpDic.sdp;
+        var type = sdpDic.type;
+        var socketId = msg.socketId;
+        if (sdp == null || type == null || socketId == null) {
+          alert('错误');
+        } else {
+          //连接并回答
+          pc.setRemoteDescription(new RTCSessionDescription(sdp), function () {}, error);
+
+        }
+      });
+
+      socket.on("_ice_candidate", function (msg) {
+        console.log('前端收到了ice');
+        //  console.log(msg);
+        console.log(socket.id);
+        console.info(msg.ownSocketId);
+        console.log(msg.socketId);
+        if (msg.socketId != msg.ownSocketId) {
+          return;
+        }
+        var socketId = msg.socketId;
+        var sdpMid = msg.id;
+        var sdpMLineIndex = msg.label;
+        var sdp = msg.candidate;
+        if (socketId == null || sdpMid == null || sdpMLineIndex == -1111 || sdp == null) {
+          alert("ice出错");
+        } else {
+          // console.log(msg);
+          msg.sdpMid = sdpMid;
+          msg.sdpMLineIndex = sdpMLineIndex;
+
+          pc.addIceCandidate(new RTCIceCandidate(msg), function (res) {
+            console.log(res)
+          }, function (res) {
+            console.log(res)
+          });
+        }
+      });
+
+
+      socket.on("videoChat", function (msg) {
+        var r = confirm(msg.from_user + "邀请你视屏聊天")
+        if (r == true) {
+          joinRoom(msg.room);
+        } else {
+          //取消
+        }
+      });
+
+
+
+      pc.ontrack = function (event) {
+        // console.log("pc answer 收到了数据");
+        // console.log(event);
+      };
+      pc.onaddstream = function (event) {
+        console.log("pc answer 收到了数据");
+        console.log(event.stream);
+        document.getElementById('remoteVideo').src = URL.createObjectURL(event.stream);
+        document.getElementById('remoteVideo').play();
+      };
+
+      //行为逻辑
+      //加入房间
+      // joinRoom(1);
+
+
+
+    }
+
+    // socket.on("siliao", function (msg) {
+    //     $(".liebiao").prepend("<li><b>" + msg.ren + "：</b>" + msg.neirong + "</li>");
+    // });
+  </script>
+</body>
+
+</html>

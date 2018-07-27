@@ -10,7 +10,6 @@
     "express-session": "*",
     "formidable": "*",
     "mongoose": "*",
-    "mysql": "^2.15.0",
     "redis": "*",
     "socket.io": "*",
     "timeout-callback": "^2.0.0"

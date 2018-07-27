@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="/layui/css/layui.css">
+  <title>Document</title>
+  <style>
+    #login_form,
+    #register_form {
+      display: none;
+    }
+
+    header {
+      background: url('/images/header.jpg');
+      background-size: 100% 100%;
+      height: 10vh;
+      /* position: fixed; */
+    }
+
+    header div:first-child {
+      float: right;
+      text-align: center;
+      /* vertical-align: -webkit-baseline-middle; */
+      height: 10vh;
+      line-height: 10vh;
+    }
+
+    .btn {
+      outline: 0;
+      border: 0;
+      /* background: transparent */
+      background: rgba(255,255,255,0.5);
+      margin:0 20px;
+      padding: 10px 20px
+      
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div>
+      <button id="loginBtn" class="btn">登陆</button>
+      <button id="registerBtn" class="btn">注册</button>
+    </div>
+    <div>1</div>
+  </header>
+
+  <div class="layui-form" id="login_form">
+    <div class="layui-form-item">
+      <label class="layui-form-label">用户名</label>
+      <div class="layui-input-block">
+        <input id="login_username" type="text" name="title" required lay-verify="required" placeholder="请输入用户名" autocomplete="off"
+          class="layui-input">
+      </div>
+    </div>
+    <div class="layui-form-item">
+      <label class="layui-form-label">密码</label>
+      <div class="layui-input-inline">
+        <input type="password" id="login_password" name="password" required lay-verify="required" placeholder="请输入密码" autocomplete="off"
+          class="layui-input">
+      </div>
+    </div>
+  </div>
+
+  <div class="layui-form" id="register_form">
+    <div class="layui-form-item">
+      <label class="layui-form-label">用户名</label>
+      <div class="layui-input-block">
+        <input id="register_username" type="text" name="title" required lay-verify="required" placeholder="请输入用户名" autocomplete="off"
+          class="layui-input">
+      </div>
+    </div>
+    <div class="layui-form-item">
+      <label class="layui-form-label">密码</label>
+      <div class="layui-input-inline">
+        <input type="password" id="register_password" name="password" required lay-verify="required" placeholder="请输入密码" autocomplete="off"
+          class="layui-input">
+      </div>
+    </div>
+  </div>
+
+
+  <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+  <!-- <script type="text/javascript" src="/jquery-1.11.3.min.js"></script> -->
+  <script src="/layui/layui.js"></script>
+  <script>
+    //http://localhost:3000/mobileLogin?userName=lili&password=123456
+
+    // 注册
+    // var url = './register';
+    // var paras = {};
+    // paras.userName = 'haha';
+    // paras.password = '123456';
+    // $.post(url,paras,function (res) {
+    //     console.log(res);
+    // });
+
+
+    layui.use(['layer', 'form'], function () {
+      var layer = layui.layer;
+      var form = layui.form;
+      var $ = layui.$
+
+      var loginBtn = $('#loginBtn');
+      loginBtn.on('click', login)
+
+      var registerBtn = $('#registerBtn');
+      registerBtn.on('click', register)
+
+      function login() {
+        layer.open({
+          title: '登陆',
+          type: 1,
+          btn: ['登陆', '取消'],
+          btnAlign: 'c',
+          content: $("#login_form").html(),
+          // content: $("#login_form").appendTo("#login_form_container"),
+          success: function (layero, index) {},
+          yes: function (index, layero) {
+            var url = './mobileLogin';
+            var paras = {};
+            paras.userName = $(layero.selector + ' #login_username').val()
+            paras.password = $(layero.selector + ' #login_password').val()
+            $.post(url, paras, function (res) {
+              console.log(res);
+              if (res.code == 1) {
+                //跳转到chat页面
+                window.location.href = '/chat';
+              } else {
+                layer.msg(res.message);
+                layer.close(index)
+              }
+
+            });
+          },
+          cancel: function (index, layero) {
+            layer.close(index)
+          }
+        });
+      }
+
+      function register() {
+        layer.open({
+          title: '注册',
+          type: 1,
+          btn: ['注册', '取消'],
+          btnAlign: 'c',
+          content: $("#register_form").html(),
+          success: function (layero, index) {},
+          yes: function (index, layero) {
+
+            var url = './register';
+            var paras = {};
+            paras.userName = $(layero.selector + ' #register_username').val()
+            paras.password = $(layero.selector + ' #register_password').val()
+            $.post(url, paras, function (res) {
+              layer.msg(res.message);
+              layer.close(index)
+              console.log(res);
+            });
+
+          },
+          cancel: function (index, layero) {
+            layer.close(index)
+          }
+        });
+      }
+
+    });
+  </script>
+</body>
+
+</html>
