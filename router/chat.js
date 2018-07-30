@@ -45,31 +45,49 @@ var chat = function (io) {
     //当一个人上线后，查询他的未读信息
     try {
       var someBody = await vfUser.findAnyOne(userName);
+      var un_reads = someBody.un_reads;
     } catch (e) {
       console.log('error'+e);
     }   
-    var un_reads = someBody.un_reads;
+   
+    // console.log(un_reads);
+    if(un_reads){
+      var len = un_reads.length;
+      for(var i=len-1;i>=0;i--){
+        console.log(i);
+        sendUnreadMsg(un_reads[i])
+      }
+      //将未读消息 置为已读
 
-    console.log(someBody);
-    console.log('---------');
-    console.log(un_reads);
-// un_reads[0]
-//     if(){
+      vfUser.User.update({
+        "name": userName
+      }, {
+        $set: {
+          un_reads: []
+        }
+      }, function () {
+        console.log("删除未读信息");
+      });
+    }
 
-//     }
+    async function sendUnreadMsg(msgId){
+      try{
+        var someMes = await vfMessage.findMsgByMsgId(msgId);
+      }catch(e){
+        console.log(e);
+      }
+      console.log(someMes);
+      if(someMes.chat_type == 'chat'){
+        socket.emit("chat",someMes)
+      }else if(someMes.chat_type == 'groupChat'){
 
-    // var len = un_reads
-    // for(){
+      }else if(someMes.chat_type == 'reqFri'){
+        socket.emit("addFriend",someMes);
+      }
+      // socket.emit("addFriend",someMes);//自己发给自己
+    }
 
-    // }
-    // try{
-    //   var someMes = await vfMessage.findMsgByMsgId(un_reads[0]);
-    // }catch(e){
-    //   console.log(e);
-    // }
-    // console.log(someMes);
 
-    //
 
     // socket.broadcast.emit("onLine", { "userName": userName });
     io.sockets.emit("onLine", {

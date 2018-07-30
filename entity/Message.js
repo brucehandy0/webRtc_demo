@@ -7,7 +7,7 @@ var Message = db.model('Message', {
   from_user: String,       //发送人
   to_user: String,         //要发送的人
   // chat_type: String,      //聊天的类型 chat(单聊)    groupChat (群聊)
-  chat_type: String,      //聊天的类型 chat(单聊)    groupChat (群聊)  reqFri （好友请求）
+  chat_type: String,      //聊天的类型 chat(单聊)    groupChat (群聊)  reqFri （好友请求）//先判断chat_type,
   type: String,            //这个只有添加好友才有值， 值 ack，syn或空 ，no,拒绝 no_body 查无此人,un_line，对方未在线
   group_id: String,        //群聊 房间id (群聊时房间id)
   group_name: String,      //群聊 房间id (群聊时房间name)
@@ -90,11 +90,12 @@ var findMsgByMsgId = function(req, res){
       Message.findOne({
         "msg_id": req
       }, function (err, result) {
-        console.log(result);
+        // console.log(result);
         if (err) {
           reject(err);
         } else {
           resolve(result);
+          
         }
       })
     });

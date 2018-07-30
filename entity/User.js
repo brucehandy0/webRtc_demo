@@ -149,26 +149,13 @@ var findAnyOne = function (req, res) {
 
   }
 }
-
-//查询一个人的未读信息
-//内部请求 ，参数是一个name ：string
-//http请求，参数是req
-// var findAnyUnreads = function(){
+// //将未读消息删除
+// var translateUnreads = function(req, res){
 //   if (typeof (req) == 'string') {
-//     return new Promise(function (resolve, reject) {
-//       User.findOne({
-//         "name": req
-//       }, function (err, result) {
-//         if (err) {
-//           reject(err);
-//         } else {
-//           resolve(result);
-//         }
-//         // console.log(result);
-//       })
+//     User.update({$set: {un_reads: ""}},function(err){
+
 //     });
-//     //http请求
-//   } else {
+//   }else{
 
 //   }
 // }

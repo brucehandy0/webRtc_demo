@@ -25,36 +25,54 @@
     #remoteVideo {
       display: none;
     }
+
+    .friend_container {
+      border: 1px solid green;
+    }
+
+    .chat_container {
+      border: 1px solid yellow;
+    }
+
+    .msg_to {
+      float: left;
+    }
+
+    .msg_from {
+      float: right;
+    }
   </style>
 </head>
 
 <body>
 
-
+  <div>
+    <button>我的信息</button>
+    <button id="quitBtn">退出</button>
+  </div>
   <video id="remoteVideo" autoplay="1"></video>
   <div>
     <span>用户</span>
     <span id="user">需要</span>
     <span>登录</span>
   </div>
-  <!-- <input type="text" name="userName">
-  <input type="text" name="password">
-  <button id="login">登录</button> -->
 
-  <!-- <br> -->
   <input type="text" name="friendName">
   <button id="addF">添加好友</button>
 
-  <!-- <div>
-    <ul class="liebiao">
-    </ul>
-  </div> -->
-
-  <div>
+  <div class="friend_container">
     <div>你的好友列表</div>
     <div id="firends"></div>
   </div>
 
+  <div class="chat_container">
+    <div>聊天列表</div>
+    <div id="message">
+      <div id="message_id"></div>
+      <div class="message_header"></div>
+      <div class="message_body"></div>
+    </div>
+  </div>
   </br>
   </br>
   </br>
@@ -90,7 +108,7 @@
 
     var user = JSON.parse('<%- user%>');
     // var user;
-    console.log(user);
+    // console.log(user);
     var socket;
     var allUser = [];
     var chooseFri = 0;
@@ -147,27 +165,6 @@
     // };
 
 
-    // $('#login').on('click', function () {
-    //   //登陆
-    //   var url = './mobileLogin';
-    //   var paras = {};
-    //   paras.userName = 'lilili';
-    //   paras.password = '123456';
-    //   if ($("input[name=userName]").val()) {
-    //     paras.userName = $("input[name=userName]").val();
-    //     paras.password = $("input[name=password]").val();
-    //   }
-
-    //   $.post(url, paras, function (res) {
-
-    //     user = res.data;
-    //     console.log(res);
-    //     initSocket();
-    //     initVideo();
-    //     $('#user').html(user.name);
-    //   });
-    // })
-// console.log(user);
     if (user) {
       initSocket();
       // initVideo();
@@ -220,15 +217,8 @@
           str = str + "<button id='A" + i + "'  onclick='chooseMe(" + i + ", \" " + res.data[i].toString() +
             " \" )'>" + res.data[i] + '</button></br>';
         }
-        //    console.log(str);
-        // console.log(str);
-
-        // console.log(allUser);
         $('#firends').html(str);
-
       });
-
-
 
 
       //发送添加好友请求
@@ -251,7 +241,7 @@
 
       //响应addFriend
       socket.on("addFriend", function (msg) {
-        console.log(msg);
+        // console.log(msg);
         if (msg.to_user == user.name) {
           if (msg.type == "ack") {
             var r = confirm(msg.from_user + "要添加您为好友，是否同意");
@@ -270,6 +260,8 @@
             if (r == true) {
               message.type = "syn";
               socket.emit("addFriend", message);
+              //刷新页面
+              history.go(0)
             } else {
               message.type = "no";
               socket.emit("addFriend", message);
@@ -281,14 +273,14 @@
             alert(msg.from_user + "已经添加您为好友");
             //刷新页面
             history.go(0)
-          } 
+          }
         }
 
         //自己给自己的消息
-        if(msg.from_user == user.name){
+        if (msg.from_user == user.name) {
           if (msg.type == "no_body") {
             alert('查无此人');
-          }else if(msg.type == "un_line"){
+          } else if (msg.type == "un_line") {
             alert('对方未上线,等待对方上线同意后,即可成为好友');
           }
         }
@@ -309,10 +301,6 @@
 
           //暂时获取name代替id，name唯一
           //获取好友id
-          // if (!isLogin) {
-          //   alert('请登陆先，ok');
-          //   // return;
-          // }
           if (!chooseFri) {
             alert('请选择一个朋友先');
             return;
@@ -333,11 +321,12 @@
           message.bodies.type = "txt"
           message.bodies.msg = $("#content").val();
           //单聊
-          socket.emit("chat", message,fn);
+          socket.emit("chat", message);
 
-          var fn = function(){
-            console.log('fffff');
-          }
+          //发送消息
+          var sendDomStr = '<div id="' + message.id + '" class="msg_to"><div class="message_header">' + message.from_user +
+            '</div><div class="message_body">' + message.bodies.msg + '</div></div><div style="clear:both"></div>';
+          $(sendDomStr).appendTo($('#message'));
 
           $(this).val("");
         }
@@ -345,12 +334,22 @@
       socket.on("chat", function (msg) {
         console.log('你收到了消息');
         console.log(msg);
+        if (msg.chat_type == "chat") {
+          // var m = JSON.parse(msg.bodies).msg
+          var str = '<div id="' + msg.msg_id + '" class="msg_from"><div class="message_header">' + msg.from_user +
+            '</div><div class="message_body">' + msg.bodies.msg + '</div></div><div style="clear:both"></div>';
+          $(str).appendTo($('#message'));
+        }
+
       });
       // socket.on("liaotian", function (msg) {
       //     console.log(msg);
       // });
 
     }
+
+
+
 
 
     function initVideo() {
@@ -607,10 +606,19 @@
       //加入房间
       // joinRoom(1);
 
-
-
     }
 
+    //退出系统
+    $('#quitBtn').on('click', function () {
+      var url = './quit';
+      var para = {
+        'username': user.name
+      }
+      $.post(url, para, function (res) {
+        console.log(res);
+        window.location.href = '/index';
+      });
+    })
     // socket.on("siliao", function (msg) {
     //     $(".liebiao").prepend("<li><b>" + msg.ren + "：</b>" + msg.neirong + "</li>");
     // });

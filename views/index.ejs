@@ -17,13 +17,11 @@
       background: url('/images/header.jpg');
       background-size: 100% 100%;
       height: 10vh;
-      /* position: fixed; */
     }
 
     header div:first-child {
       float: right;
       text-align: center;
-      /* vertical-align: -webkit-baseline-middle; */
       height: 10vh;
       line-height: 10vh;
     }
@@ -31,7 +29,6 @@
     .btn {
       outline: 0;
       border: 0;
-      /* background: transparent */
       background: rgba(255,255,255,0.5);
       margin:0 20px;
       padding: 10px 20px
@@ -55,14 +52,14 @@
       <label class="layui-form-label">用户名</label>
       <div class="layui-input-block">
         <input id="login_username" type="text" name="title" required lay-verify="required" placeholder="请输入用户名" autocomplete="off"
-          class="layui-input">
+          class="layui-input" value="haha">
       </div>
     </div>
     <div class="layui-form-item">
       <label class="layui-form-label">密码</label>
       <div class="layui-input-inline">
         <input type="password" id="login_password" name="password" required lay-verify="required" placeholder="请输入密码" autocomplete="off"
-          class="layui-input">
+          class="layui-input" value="123456">
       </div>
     </div>
   </div>
@@ -100,7 +97,6 @@
     //     console.log(res);
     // });
 
-
     layui.use(['layer', 'form'], function () {
       var layer = layui.layer;
       var form = layui.form;
@@ -119,8 +115,15 @@
           btn: ['登陆', '取消'],
           btnAlign: 'c',
           content: $("#login_form").html(),
-          // content: $("#login_form").appendTo("#login_form_container"),
-          success: function (layero, index) {},
+          success: function (layero, index) {
+            var btn = $('body');
+            var self = this;
+            btn.on('keydown',function(e){
+              if(e.keyCode == "13"){
+                self.yes(index,layero);
+              }
+            });
+          },
           yes: function (index, layero) {
             var url = './mobileLogin';
             var paras = {};
@@ -135,10 +138,11 @@
                 layer.msg(res.message);
                 layer.close(index)
               }
-
             });
           },
           cancel: function (index, layero) {
+            var btn = $('body');
+            btn.off('keydown')
             layer.close(index)
           }
         });
@@ -153,7 +157,6 @@
           content: $("#register_form").html(),
           success: function (layero, index) {},
           yes: function (index, layero) {
-
             var url = './register';
             var paras = {};
             paras.userName = $(layero.selector + ' #register_username').val()
@@ -163,14 +166,12 @@
               layer.close(index)
               console.log(res);
             });
-
           },
           cancel: function (index, layero) {
             layer.close(index)
           }
         });
       }
-
     });
   </script>
 </body>

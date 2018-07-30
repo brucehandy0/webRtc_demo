@@ -6,7 +6,20 @@ var router = function (app) {
     res.render("index");
   });
 
+  //离开系统，清空session
+  app.post("/quit", function (req, res, next) {
+    // console.log(req.body);
+    // console.log('----------');
+    // 
+    delete req.session.user;
+    // console.log(req.session);
+    res.json({
+      code: 1,
+      message: "用户已经退出",
+      data: ""
+    });
 
+  });
 
   //userName,password,  headImageUrl(这个可以有)
   app.post("/register", function (req, res, next) {
