@@ -41,13 +41,20 @@
     .msg_from {
       float: right;
     }
+
+    #firends button {
+      background: white;
+    }
+    #showHistoryInfo{
+      text-align: center;
+    }
   </style>
 </head>
 
 <body>
 
   <div>
-    <button>我的信息</button>
+    <button id="myInfo">我的信息</button>
     <button id="quitBtn">退出</button>
   </div>
   <video id="remoteVideo" autoplay="1"></video>
@@ -67,10 +74,13 @@
 
   <div class="chat_container">
     <div>聊天列表</div>
+    <button id="showHistoryInfo">显示历史信息</button>
     <div id="message">
-      <div id="message_id"></div>
-      <div class="message_header"></div>
-      <div class="message_body"></div>
+      <div id="message_id">
+        <div class="message_header"></div>
+        <div class="message_time"></div>
+        <div class="message_body"></div>
+      </div>
     </div>
   </div>
   </br>
@@ -86,16 +96,17 @@
 
   <script type="text/javascript" src="/socket.io/socket.io.js"></script>
   <script type="text/javascript" src="/jquery-1.11.3.min.js"></script>
+  <script src="/js/utils.js"></script>
   <script type="text/javascript">
-    var generateUUID = function () {
-      var d = new Date().getTime();
-      var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = (d + Math.random() * 16) % 16 | 0;
-        d = Math.floor(d / 16);
-        return (c == 'x' ? r : (r & 0x7 | 0x8)).toString(16);
-      });
-      return uuid;
-    };
+    // var generateUUID = function () {
+    //   var d = new Date().getTime();
+    //   var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    //     var r = (d + Math.random() * 16) % 16 | 0;
+    //     d = Math.floor(d / 16);
+    //     return (c == 'x' ? r : (r & 0x7 | 0x8)).toString(16);
+    //   });
+    //   return uuid;
+    // };
   </script>
 
 
@@ -103,8 +114,6 @@
     // var name1 = '<%- user%>';
     // unescape() 对 escape() 
     // decodeURI() 和 decodeURIComponent() 
-
-
 
     var user = JSON.parse('<%- user%>');
     // var user;
@@ -176,10 +185,55 @@
 
     function chooseMe(index, value) {
       chooseFri = allUser[index].value;
-      // document.get
-      console.log(chooseFri);
+      // console.log(chooseFri);
+      var doms = $('[id^=A]*');
+      var len = doms.length;
+      for (var i = len - 1; i >= 0; i--) {
+        doms[i].style.background = 'white'
+      }
       document.getElementById("A" + index).style.background = "red";
-      //  document.getElementById("A" + index).
+
+      //切换
+      $('#message').html('');
+    }
+    //查看历史信息
+    $('#showHistoryInfo').on('click', showHistoryInfo)
+
+    function showHistoryInfo() {
+      if (!chooseFri) {
+        alert('请选择一个朋友先');
+        return;
+      }
+      var url = './gethistoryinfo';
+      var para = {
+        'reqto': chooseFri,
+        'reqfrom': user.name
+      }
+      $.post(url, para, function (res) {
+        console.log(res);
+        if (res.code === 1) {
+          var len = res.data.length;
+          for (var i = len - 1; i >= 0; i--) {
+            var msg = res.data[i];
+            console.log(msg);
+            console.log(user.name);
+            msg.bodies = JSON.parse(msg.bodies);
+            if (msg.from_user == user.name) {
+              var str = '<div id="' + msg.msg_id + '" class="msg_to><div class="message_header">' + msg.from_user +
+                '</div>   <div class="message_time">'+formatDateTime(msg.sendtime)+'</div>  <div class="message_body">' + msg.bodies.msg + '</div></div><div style="clear:both"></div>';
+              $(str).prependTo($('#message'));
+            } else {
+              var str = '<div id="' + msg.msg_id + '" class="msg_from"><div class="message_header">' + msg.from_user +
+                '</div>  <div class="message_time">'+formatDateTime(msg.sendtime)+'</div> <div class="message_body">' + msg.bodies.msg + '</div></div><div style="clear:both"></div>';
+              $(str).prependTo($('#message'));
+            }
+
+
+
+          }
+        }
+      });
+
     }
 
     function initSocket() {
@@ -325,7 +379,7 @@
 
           //发送消息
           var sendDomStr = '<div id="' + message.id + '" class="msg_to"><div class="message_header">' + message.from_user +
-            '</div><div class="message_body">' + message.bodies.msg + '</div></div><div style="clear:both"></div>';
+            '</div>  <div class="message_time">'+formatDateTime(msg.sendtime)+'</div> <div class="message_body">' + message.bodies.msg + '</div></div><div style="clear:both"></div>';
           $(sendDomStr).appendTo($('#message'));
 
           $(this).val("");
@@ -337,7 +391,7 @@
         if (msg.chat_type == "chat") {
           // var m = JSON.parse(msg.bodies).msg
           var str = '<div id="' + msg.msg_id + '" class="msg_from"><div class="message_header">' + msg.from_user +
-            '</div><div class="message_body">' + msg.bodies.msg + '</div></div><div style="clear:both"></div>';
+            '</div>  <div class="message_time">'+formatDateTime(msg.sendtime)+'</div> <div class="message_body">' + msg.bodies.msg + '</div></div><div style="clear:both"></div>';
           $(str).appendTo($('#message'));
         }
 
@@ -617,6 +671,16 @@
       $.post(url, para, function (res) {
         console.log(res);
         window.location.href = '/index';
+      });
+    })
+    // 获取我的信息
+    $('#myInfo').on('click', function () {
+      var url = './getmyinfo';
+      var para = {
+        'username': user.name
+      }
+      $.post(url, para, function (res) {
+        console.log(res);
       });
     })
     // socket.on("siliao", function (msg) {

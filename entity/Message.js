@@ -1,20 +1,20 @@
 var db = require('../config/mongoose.js');
 
 var Message = db.model('Message', {
-  msg_id: String,            //消息id uuid
-  timestamp: Number,        //发送(服务器)时间
-  sendtime: Number,        //客户端发送时间
-  from_user: String,       //发送人
-  to_user: String,         //要发送的人
+  msg_id: String, //消息id uuid
+  timestamp: Number, //发送(服务器)时间
+  sendtime: Number, //客户端发送时间
+  from_user: String, //发送人
+  to_user: String, //要发送的人
   // chat_type: String,      //聊天的类型 chat(单聊)    groupChat (群聊)
-  chat_type: String,      //聊天的类型 chat(单聊)    groupChat (群聊)  reqFri （好友请求）//先判断chat_type,
-  type: String,            //这个只有添加好友才有值， 值 ack，syn或空 ，no,拒绝 no_body 查无此人,un_line，对方未在线
-  group_id: String,        //群聊 房间id (群聊时房间id)
-  group_name: String,      //群聊 房间id (群聊时房间name)
-  ext: String,            //扩展
-  bodies: String ,         //内容 json 文本 存储
-                          //类型1-->文本类型  { "type":"txt","msg":"hello from test2"}
-                          //类型2-->图片类型  { "type":"img","imgUrl":"hello from test2","imageName","图片名称"  //消息内容}
+  chat_type: String, //聊天的类型 chat(单聊)    groupChat (群聊)  reqFri （好友请求）//先判断chat_type,
+  type: String, //这个只有添加好友才有值， 值 ack，syn或空 ，no,拒绝 no_body 查无此人,un_line，对方未在线
+  group_id: String, //群聊 房间id (群聊时房间id)
+  group_name: String, //群聊 房间id (群聊时房间name)
+  ext: String, //扩展
+  bodies: String, //内容 json 文本 存储
+  //类型1-->文本类型  { "type":"txt","msg":"hello from test2"}
+  //类型2-->图片类型  { "type":"img","imgUrl":"hello from test2","imageName","图片名称"  //消息内容}
 })
 
 
@@ -56,7 +56,7 @@ var friendMessageSave = function (message, callBack) {
   var timestamp = new Date().getTime();
   var bodies = JSON.stringify(message.bodies);
   var msg = new Message({
-    msg_id: message.msg_id,//客户端生成
+    msg_id: message.msg_id, //客户端生成
     timestamp: timestamp,
     sendtime: message.sendtime,
     from_user: message.from_user,
@@ -83,8 +83,8 @@ var friendMessageSave = function (message, callBack) {
 }
 
 //根据msg_id 查找此信息
-var findMsgByMsgId = function(req, res){
-  console.log(typeof (req));
+var findMsgByMsgId = function (req, res) {
+  // console.log(typeof (req));
   if (typeof (req) == 'string') {
     return new Promise(function (resolve, reject) {
       Message.findOne({
@@ -95,7 +95,7 @@ var findMsgByMsgId = function(req, res){
           reject(err);
         } else {
           resolve(result);
-          
+
         }
       })
     });
@@ -104,10 +104,42 @@ var findMsgByMsgId = function(req, res){
 
   }
 }
+//用户查看历史信息
+var getHistoryInfo = function (req, res) {
+  if (typeof (req) == 'string') {
+
+    //http请求
+  } else {
+
+    Message.find({
+      $or: [{
+          "chat_type": "chat",
+          "from_user": req.body.reqfrom,
+          "to_user": req.body.reqto
+        },
+        {
+          "chat_type": "chat",
+          "from_user": req.body.reqto,
+          "to_user": req.body.reqfrom
+        },
+      ]
+    }).sort({
+      "sendtime": 1
+    }).exec(function (err, result) {
+      res.json({
+        code: 1,
+        message: "用户查看历史信息",
+        data: result
+      });
+    })
+
+  }
+}
 
 module.exports = {
   Message,
   save,
   friendMessageSave,
-  findMsgByMsgId
+  findMsgByMsgId,
+  getHistoryInfo
 };

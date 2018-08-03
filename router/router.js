@@ -1,6 +1,6 @@
 var router = function (app) {
   var vfUser = require("../entity/User.js");
-
+  var vfMessage = require("../entity/Message.js");
   //主页
   app.get("/", function (req, res, next) {
     res.render("index");
@@ -8,19 +8,21 @@ var router = function (app) {
 
   //离开系统，清空session
   app.post("/quit", function (req, res, next) {
-    // console.log(req.body);
-    // console.log('----------');
-    // 
     delete req.session.user;
-    // console.log(req.session);
     res.json({
       code: 1,
       message: "用户已经退出",
       data: ""
     });
-
   });
-
+  //获取我的信息
+  app.post("/getmyinfo", function (req, res, next) {
+    vfUser.getMyInfo(req, res);
+  });
+  // 用户查看历史信息
+  app.post("/gethistoryinfo", function (req, res, next) {
+    vfMessage.getHistoryInfo(req,res)
+  });
   //userName,password,  headImageUrl(这个可以有)
   app.post("/register", function (req, res, next) {
     vfUser.register(req, res);

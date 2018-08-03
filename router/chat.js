@@ -24,7 +24,6 @@ var chat = function (io) {
   // })
 
   io.on("connection",async function (socket) {
-    // console.log("---来了");
     var token = socket.handshake.query.auth_token;
     var userName = vfglobal.token_Map[token];
     

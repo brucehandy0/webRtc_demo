@@ -232,9 +232,30 @@ var findFriends = function (req, res) {
         data: ""
       });
     }
-
   });
 }
+var getMyInfo = function(req, res){
+  var userName = req.body.userName;
+  User.find({
+    "name": userName
+  }, function (err, result) {
+    var user = result[0];
+    if (user) {
+      res.json({
+        code: 1,
+        message: "好友列表",
+        data: user
+      });
+    } else {
+      res.json({
+        code: 0,
+        message: "没有数据",
+        data: ""
+      });
+    }
+  })
+}
+
 module.exports = {
   User,
   mobileLogin,
@@ -242,5 +263,6 @@ module.exports = {
   register,
   findAllUser,
   findFriends,
-  findAnyOne
+  findAnyOne,
+  getMyInfo
 };
